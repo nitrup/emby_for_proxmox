@@ -32,7 +32,7 @@ function update_script() {
         msg_error "No ${APP} Installation Found!"
         exit
     fi
-    LATEST=$(curl -sL https://api.github.com/repos/MediaBrowser/Emby.Releases/releases/latest | grep '"tag_name":' | cut -d'"' -f4)
+    LATEST=$(curl -sL https://api.github.com/repos/MediaBrowser/Emby.Releases/releases | grep '"tag_name":' | cut -d'"' -f4)
     msg_info "Stopping ${APP}"
     systemctl stop emby-server
     msg_ok "Stopped ${APP}"
