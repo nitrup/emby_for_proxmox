@@ -1,52 +1,60 @@
 #!/usr/bin/env bash
-
+source <(curl -s https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/build.func)
 # Copyright (c) 2021-2024 tteck
 # Author: tteck (tteckster)
-# License: MIT
-# https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
+# License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
+# Source: https://emby.media/
 
-source /dev/stdin <<< "$FUNCTIONS_FILE_PATH"
+# App Default Values
+APP="Emby"
+var_tags="media"
+var_cpu="2"
+var_ram="2048"
+var_disk="8"
+var_os="ubuntu"
+var_version="22.04"
+var_unprivileged="1"
+
+# App Output & Base Settings
+header_info "$APP"
+base_settings
+
+# Core
+variables
 color
-verb_ip6
 catch_errors
-setting_up_container
-network_check
-update_os
 
-msg_info "Installing Dependencies"
-$STD apt-get install -y curl
-$STD apt-get install -y sudo
-$STD apt-get install -y mc
-msg_ok "Installed Dependencies"
+function update_script() {
+    header_info
+    check_container_storage
+    check_container_resources
+    if [[ ! -d /opt/emby-server ]]; then
+        msg_error "No ${APP} Installation Found!"
+        exit
+    fi
+    LATEST=$(curl -sL https://api.github.com/repos/MediaBrowser/Emby.Releases/releases | grep '"tag_name":' | cut -d'"' -f4)
+    msg_info "Stopping ${APP}"
+    systemctl stop emby-server
+    msg_ok "Stopped ${APP}"
 
-msg_info "Setting Up Hardware Acceleration"
-$STD apt-get -y install {va-driver-all,ocl-icd-libopencl1,intel-opencl-icd,vainfo,intel-gpu-tools}
-if [[ "$CTTYPE" == "0" ]]; then
-  chgrp video /dev/dri
-  chmod 755 /dev/dri
-  chmod 660 /dev/dri/*
-  $STD adduser $(id -u -n) video
-  $STD adduser $(id -u -n) render
-fi
-msg_ok "Set Up Hardware Acceleration"
+    msg_info "Updating ${APP}"
+    wget https://github.com/MediaBrowser/Emby.Releases/releases/download/${LATEST}/emby-server-deb_${LATEST}_amd64.deb &>/dev/null
+    dpkg -i emby-server-deb_${LATEST}_amd64.deb &>/dev/null
+    rm emby-server-deb_${LATEST}_amd64.deb
+    msg_ok "Updated ${APP}"
 
-LATEST=$(curl -sL https://api.github.com/repos/MediaBrowser/Emby.Releases/releases | grep '"tag_name":' | cut -d'"' -f4)
+    msg_info "Starting ${APP}"
+    systemctl start emby-server
+    msg_ok "Started ${APP}"
+    msg_ok "Updated Successfully"
+    exit
+}
 
-msg_info "Installing Emby"
-wget -q https://github.com/MediaBrowser/Emby.Releases/releases/download/${LATEST}/emby-server-deb_${LATEST}_amd64.deb
-$STD dpkg -i emby-server-deb_${LATEST}_amd64.deb
-if [[ "$CTTYPE" == "0" ]]; then
-  sed -i -e 's/^ssl-cert:x:104:$/render:x:104:root,emby/' -e 's/^render:x:108:root,emby$/ssl-cert:x:108:/' /etc/group
-else
-  sed -i -e 's/^ssl-cert:x:104:$/render:x:104:emby/' -e 's/^render:x:108:emby$/ssl-cert:x:108:/' /etc/group
-fi
-msg_ok "Installed Emby"
+start
+build_container
+description
 
-motd_ssh
-customize
-
-msg_info "Cleaning up"
-$STD apt-get -y autoremove
-$STD apt-get -y autoclean
-rm emby-server-deb_${LATEST}_amd64.deb
-msg_ok "Cleaned"
+msg_ok "Completed Successfully!\n"
+echo -e "${CREATING}${GN}${APP} setup has been successfully initialized!${CL}"
+echo -e "${INFO}${YW} Access it using the following URL:${CL}"
+echo -e "${TAB}${GATEWAY}${BGN}http://${IP}:8086${CL}"
