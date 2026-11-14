@@ -15,7 +15,17 @@ for arg in "$@"; do
     -y|--yes)   AUTO_YES=1 ;;
     --stable)   STABLE_ONLY=1 ;;
     --no-ui)    USE_UI=0 ;;
-    -h|--help)  sed -n '2,8p' "$0"; exit 0 ;;
+    -h|--help)
+      cat <<'EOF'
+Emby Server – mise à jour vers la dernière release GitHub
+Usage : install_emby_lastest.sh [-y] [--stable] [--no-ui]
+  -y        : pas de confirmation (cron / Proxmox hook)
+  --stable  : ignorer les versions bêta (requiert jq)
+  --no-ui   : forcer le mode texte (pas de whiptail)
+One-liner :
+  bash -c "$(curl -fsSL https://raw.githubusercontent.com/nitrup/emby_for_proxmox/main/install_emby_lastest.sh)" emby-update [options]
+EOF
+      exit 0 ;;
     *) echo "Option inconnue : $arg"; exit 2 ;;
   esac
 done

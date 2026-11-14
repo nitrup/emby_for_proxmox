@@ -16,7 +16,24 @@ pensé pour un container LXC Debian/Ubuntu sous Proxmox.
 - Redémarrage et vérification du service `emby-server` après installation
 - Journal dans `/var/log/emby-update.log`
 
-## Installation
+## Lancement direct (sans installer)
+
+Dans le container (en root) :
+
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/nitrup/emby_for_proxmox/main/install_emby_lastest.sh)"
+```
+
+Pour passer des options, ajouter un nom de programme puis les options :
+
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/nitrup/emby_for_proxmox/main/install_emby_lastest.sh)" emby-update -y --stable
+```
+
+> Ne pas utiliser `curl … | bash` : l'entrée standard ne serait plus le terminal
+> et l'interface `whiptail` / la confirmation ne pourraient pas s'afficher.
+
+## Installation locale
 
 Dans le container (en root) :
 
